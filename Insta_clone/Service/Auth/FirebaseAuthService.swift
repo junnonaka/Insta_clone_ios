@@ -9,7 +9,8 @@ import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
-enum AutAuthError: Error {
+enum AuthError: Error {
+    case missingFirebaseUser
     case unknown
 }
 
@@ -28,7 +29,7 @@ final class FirebaseAuthService : AuthService{
                 if let user = result?.user {
                     continuation.resume(returning:AppUser(id: user.uid, email: user.email!, displayName: user.displayName, isEmailVerified: user.isEmailVerified))
                 }else{
-                    continuation.resume(throwing: AutAuthError.unknown)
+                    continuation.resume(throwing: AuthError.unknown)
                 }
             }
         }
@@ -75,7 +76,7 @@ final class FirebaseAuthService : AuthService{
                 if let user = user?.user {
                     continuation.resume(returning: user)
                 }else{
-                    continuation.resume(throwing: AutAuthError.unknown)
+                    continuation.resume(throwing: AuthError.unknown)
                 }
             }
         }
@@ -102,7 +103,6 @@ final class FirebaseAuthService : AuthService{
                 cont.resume(returning: ())
             }
         }
-        
         
     }
     

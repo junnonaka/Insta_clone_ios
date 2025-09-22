@@ -9,10 +9,18 @@ import SwiftUI
 
 struct SignupView: View {
     
-    @State private var email: String = ""
-    @State private var password: String = ""
+    @StateObject private var vm: SignupViewModel
+    let onSuccess: (AppUser) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
     @State private var isSecure: Bool = true
     @State private var navBarHeight: CGFloat = 0
+    
+    init(vm: SignupViewModel, onSuccess: @escaping (AppUser) -> Void) {
+        _vm = StateObject(wrappedValue: vm)
+        self.onSuccess = onSuccess
+    }
+    
     
     var body: some View {
         VStack(spacing:15){
@@ -22,18 +30,18 @@ struct SignupView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 200, height: 100)
-            TextField("メールアドレス", text: $email)
+            TextField("メールアドレス", text: $vm.email)
                 .textContentType(UITextContentType.emailAddress)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal,15)
             ZStack{
                 if !isSecure{
-                    TextField("パスワード",text: $password)
+                    TextField("パスワード",text: $vm.password)
                         .textContentType(UITextContentType.newPassword)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding(.horizontal,15)
                 }else {
-                    SecureField("パスワード",text: $password)
+                    SecureField("パスワード",text: $vm.password)
                         .textContentType(UITextContentType.newPassword)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding(.horizontal,15)
@@ -52,7 +60,15 @@ struct SignupView: View {
             }
             
             Button {
-                
+                Task {
+                    do {
+                        let user = try await vm.signUp()
+                        onSuccess(user)
+                        dismiss()
+                    } catch {
+                        // エラーはViewModelで処理済み
+                    }
+                }
             } label: {
                 Text("サインアップ")
                     .foregroundStyle(Color.white)
@@ -72,5 +88,13 @@ struct SignupView: View {
 }
 
 #Preview {
-    SignupView()
+        let vm: SignupViewModel = {
+            let v = SignupViewModel(authService: MockAuthService())
+            v.email = ""
+            v.displayName = ""
+            return v
+        }()
+    SignupView(vm: vm) { User in
+        print(User.displayName)
+    }
 }
